@@ -23,6 +23,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	void ApplyRotation(float DeltaTime);
+
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -34,11 +36,29 @@ private:
 	UPROPERTY(EditAnywhere)
 		float MaxDrivingForce = 10000;
 
+	UPROPERTY(EditAnywhere)
+		float DragCoefficient = 16;
+
+	UPROPERTY(EditAnywhere)
+		float RollingResistanceCoefficient = 0.01f;
+
+	UPROPERTY(EditAnywhere)
+		float MinTurningRadius = 10;
+
+	//The number of degrees rotated per second at full control throw (degrees/s)
+	UPROPERTY(EditAnywhere)
+		float MaxDegreesPerSecond = 90;
+
 	FVector Velocity;
 
 	float Throttle;
+	float SteeringThrow;
 
 	void MoveForward(float Value);
+	void MoveRight(float Value);
 	
 	void UpdateLocationFromVelocity(float DeltaTime);
+	
+	FVector GetAirResistance();
+	FVector GetRollingResistance();
 };
