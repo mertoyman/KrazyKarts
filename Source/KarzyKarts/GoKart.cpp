@@ -3,13 +3,14 @@
 
 #include "GoKart.h"
 #include "DrawDebugHelpers.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AGoKart::AGoKart()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -18,24 +19,6 @@ void AGoKart::BeginPlay()
 	Super::BeginPlay();
 	
 }
-
-//FString GetEnumText(ENetRole Role) 
-//{
-//	switch (Role)
-//	{
-//	case ROLE_None:
-//		return "None";
-//	case ROLE_SimulatedProxy:
-//		return "SimulatedProxy";
-//	case ROLE_AutonomousProxy:
-//		return "AutonomousProxy";
-//	case ROLE_Authority:
-//		return "Authority";
-//	default:
-//		return "ERROR";
-//	}
-//
-//}
 
 // Called every frame
 void AGoKart::Tick(float DeltaTime)
@@ -49,13 +32,22 @@ void AGoKart::Tick(float DeltaTime)
 
 	FVector Acceleration = Force / Mass;
 
-
 	Velocity = Velocity + Acceleration * DeltaTime;
 	
-
 	ApplyRotation(DeltaTime);
 
 	UpdateLocationFromVelocity(DeltaTime);
+
+	if (HasAuthority())
+	{
+		ReplicatedLocation = GetActorLocation();
+		ReplicatedRotation = GetActorRotation();
+	}
+	else 
+	{
+		SetActorLocation(ReplicatedLocation);
+		SetActorRotation(ReplicatedRotation);
+	}
 
 	DrawDebugString(GetWorld(), FVector(0, 0, 100), UEnum::GetValueAsString(GetLocalRole()), this, FColor::White, DeltaTime);
 }
@@ -82,6 +74,13 @@ void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 	if (HitResult.IsValidBlockingHit()) {
 		Velocity = FVector::ZeroVector;
 	}
+}
+
+void AGoKart::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AGoKart, ReplicatedLocation);
+	DOREPLIFETIME(AGoKart, ReplicatedRotation);
 }
 
 FVector AGoKart::GetAirResistance()
