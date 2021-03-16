@@ -49,6 +49,7 @@ private:
 	UPROPERTY(EditAnywhere)
 		float MaxDegreesPerSecond = 90;
 
+	UPROPERTY(Replicated)
 	FVector Velocity;
 
 	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
@@ -57,7 +58,10 @@ private:
 	UFUNCTION()
 		void OnRep_ReplicatedTransform();
 
+	UPROPERTY(Replicated)
 	float Throttle;
+
+	UPROPERTY(Replicated)
 	float SteeringThrow;
 
 	UFUNCTION(Server, Reliable, WithValidation)

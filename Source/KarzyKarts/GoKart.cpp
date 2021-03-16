@@ -77,6 +77,9 @@ void AGoKart::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AGoKart, ReplicatedTransform);
+	DOREPLIFETIME(AGoKart, Velocity);
+	DOREPLIFETIME(AGoKart, SteeringThrow);
+	DOREPLIFETIME(AGoKart, Throttle);
 }
 
 FVector AGoKart::GetAirResistance()
@@ -103,7 +106,7 @@ void AGoKart::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AGoKart::OnRep_ReplicatedTransform()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Replicated Transform"));
+	SetActorTransform(ReplicatedTransform);
 }
 
 void AGoKart::MoveForward(float Value)
