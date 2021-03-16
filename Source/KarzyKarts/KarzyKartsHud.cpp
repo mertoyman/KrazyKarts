@@ -27,7 +27,6 @@ AKarzyKartsHud::AKarzyKartsHud()
 void AKarzyKartsHud::DrawHUD()
 {
 	Super::DrawHUD();
-
 	// Calculate ratio from 720p
 	const float HUDXRatio = Canvas->SizeX / 1280.f;
 	const float HUDYRatio = Canvas->SizeY / 720.f;

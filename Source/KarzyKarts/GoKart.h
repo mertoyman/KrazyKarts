@@ -51,11 +51,11 @@ private:
 
 	FVector Velocity;
 
-	UPROPERTY(replicated)
-		FVector ReplicatedLocation;
+	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
+		FTransform ReplicatedTransform;
 
-	UPROPERTY(replicated)
-		FRotator ReplicatedRotation;
+	UFUNCTION()
+		void OnRep_ReplicatedTransform();
 
 	float Throttle;
 	float SteeringThrow;
