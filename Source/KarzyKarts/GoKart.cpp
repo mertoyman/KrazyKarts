@@ -30,22 +30,19 @@ void AGoKart::Tick(float DeltaTime)
 
 	if (IsLocallyControlled()) 
 	{
-		FGoKartMove Move;
-		Move.DeltaTime = DeltaTime;
-		Move.SteeringThrow = SteeringThrow;
-		Move.Throttle = Throttle;
-		//TODO: Set time
+		FGoKartMove Move = CreateMove(DeltaTime);
+
+		UnacknowledgedMoves.Add(Move);
+
+		UE_LOG(LogTemp, Warning, TEXT("Queue length: %d"), UnacknowledgedMoves.Num())
 
 		Server_SendMove(Move);
 
 		SimulateMove(Move);
 	}
-
 	
 	DrawDebugString(GetWorld(), FVector(0, 0, 100), UEnum::GetValueAsString(GetLocalRole()), this, FColor::White, DeltaTime);
 }
-
-
 
 void AGoKart::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -57,6 +54,8 @@ void AGoKart::OnRep_ServerState()
 {
 	SetActorTransform(ServerState.Transform);
 	Velocity = ServerState.Velocity;
+
+	ClearAcknowledgeMoves(ServerState.LastMove);
 }
 
 void AGoKart::SimulateMove(FGoKartMove Move)
@@ -76,6 +75,32 @@ void AGoKart::SimulateMove(FGoKartMove Move)
 
 }
 
+FGoKartMove AGoKart::CreateMove(float DeltaTime)
+{
+	FGoKartMove Move;
+	Move.DeltaTime = DeltaTime;
+	Move.SteeringThrow = SteeringThrow;
+	Move.Throttle = Throttle;
+	Move.Time = GetWorld()->TimeSeconds;
+
+	return Move;
+}
+
+void AGoKart::ClearAcknowledgeMoves(FGoKartMove LastMove)
+{
+	TArray<FGoKartMove> NewMoves;
+
+	for (const FGoKartMove& Move : UnacknowledgedMoves)
+	{
+		if (Move.Time > LastMove.Time)
+		{
+			NewMoves.Add(Move);
+		}
+	}
+
+	UnacknowledgedMoves = NewMoves;
+}
+
 FVector AGoKart::GetAirResistance()
 {
 	return -Velocity.GetSafeNormal() * Velocity.SizeSquared() * DragCoefficient;
@@ -88,7 +113,6 @@ FVector AGoKart::GetRollingResistance()
 
 	return -Velocity.GetSafeNormal() * NormalForce * RollingResistanceCoefficient;
 }
-
 
 void AGoKart::ApplyRotation(float DeltaTime, float _SteeringThrow)
 {
@@ -122,8 +146,6 @@ void AGoKart::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAxis("MoveForward", this, &AGoKart::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AGoKart::MoveRight);
 }
-
-
 
 void AGoKart::MoveForward(float Value)
 {

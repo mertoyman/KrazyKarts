@@ -52,17 +52,14 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	void ApplyRotation(float DeltaTime, float SteeringThrow);
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
-	void SimulateMove(FGoKartMove Move);
 
 	UPROPERTY(EditAnywhere)
 		float Mass = 1000;
@@ -80,31 +77,36 @@ private:
 	UPROPERTY(EditAnywhere)
 		float MinTurningRadius = 10;
 
-	//The number of degrees rotated per second at full control throw (degrees/s)
-	UPROPERTY(EditAnywhere)
-		float MaxDegreesPerSecond = 90;
+	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
+		FGOKartState ServerState;
 
+	UFUNCTION(Server, Reliable, WithValidation)
+		void Server_SendMove(FGoKartMove Move);
+
+	UFUNCTION()
+		void OnRep_ServerState();
+
+	void MoveForward(float Value);
+	void MoveRight(float Value);
+
+	void SimulateMove(FGoKartMove Move);
+
+	FGoKartMove CreateMove(float DeltaTime);
+
+	void ClearAcknowledgeMoves(FGoKartMove LastMove);
+
+	void UpdateLocationFromVelocity(float DeltaTime);
+
+	void ApplyRotation(float DeltaTime, float SteeringThrow);
+
+	FVector GetAirResistance();
+	FVector GetRollingResistance();
+	
 	FVector Velocity;
 
 	float Throttle;
 
 	float SteeringThrow;
 
-	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
-		FGOKartState ServerState;
-
-	UFUNCTION()
-		void OnRep_ServerState();
-
-	UFUNCTION(Server, Reliable, WithValidation)
-		void Server_SendMove(FGoKartMove Move);
-
-	void MoveForward(float Value);
-	void MoveRight(float Value);
-
-	
-	void UpdateLocationFromVelocity(float DeltaTime);
-	
-	FVector GetAirResistance();
-	FVector GetRollingResistance();
+	TArray<FGoKartMove> UnacknowledgedMoves;
 };
