@@ -6,6 +6,39 @@
 #include "GameFramework/Pawn.h"
 #include "GoKart.generated.h"
 
+USTRUCT()
+struct FGoKartMove 
+{
+	GENERATED_USTRUCT_BODY()
+	
+	UPROPERTY()
+		float Throttle;
+
+	UPROPERTY()
+		float SteeringThrow;
+
+	UPROPERTY()
+		float DeltaTime;
+
+	UPROPERTY()
+		float Time;
+};
+
+USTRUCT()
+struct FGOKartState
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+		FTransform Transform;
+
+	UPROPERTY()
+		FVector Velocity;
+
+	UPROPERTY()
+		FGoKartMove LastMove;
+};
+
 UCLASS()
 class KARZYKARTS_API AGoKart : public APawn
 {
@@ -49,29 +82,26 @@ private:
 	UPROPERTY(EditAnywhere)
 		float MaxDegreesPerSecond = 90;
 
-	UPROPERTY(Replicated)
 	FVector Velocity;
 
-	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
-		FTransform ReplicatedTransform;
+	UPROPERTY(Replicated)
+		float Throttle;
+
+	UPROPERTY(Replicated)
+		float SteeringThrow;
+
+	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
+		FGOKartState ServerState;
 
 	UFUNCTION()
-		void OnRep_ReplicatedTransform();
-
-	UPROPERTY(Replicated)
-	float Throttle;
-
-	UPROPERTY(Replicated)
-	float SteeringThrow;
+		void OnRep_ServerState();
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MoveForward(float Value);
-
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MoveRight(float Value);
+		void Server_SendMove(FGoKartMove Move);
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
+
 	
 	void UpdateLocationFromVelocity(float DeltaTime);
 	
