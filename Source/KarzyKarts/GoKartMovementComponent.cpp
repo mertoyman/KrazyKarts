@@ -13,7 +13,6 @@ UGoKartMovementComponent::UGoKartMovementComponent()
 	// ...
 }
 
-
 // Called when the game starts
 void UGoKartMovementComponent::BeginPlay()
 {
@@ -22,7 +21,6 @@ void UGoKartMovementComponent::BeginPlay()
 	// ...
 	
 }
-
 
 // Called every frame
 void UGoKartMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

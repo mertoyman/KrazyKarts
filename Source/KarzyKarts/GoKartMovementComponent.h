@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+
 #include "GoKartMovementComponent.generated.h"
 
 USTRUCT()
