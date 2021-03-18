@@ -32,9 +32,12 @@ void AGoKart::Tick(float DeltaTime)
 	{
 		FGoKartMove Move = CreateMove(DeltaTime);
 
-		UnacknowledgedMoves.Add(Move);
+		if(!HasAuthority())
+		{
+			UnacknowledgedMoves.Add(Move);
 
-		UE_LOG(LogTemp, Warning, TEXT("Queue length: %d"), UnacknowledgedMoves.Num())
+			UE_LOG(LogTemp, Warning, TEXT("Queue length: %d"), UnacknowledgedMoves.Num())
+		}
 
 		Server_SendMove(Move);
 
@@ -56,9 +59,14 @@ void AGoKart::OnRep_ServerState()
 	Velocity = ServerState.Velocity;
 
 	ClearAcknowledgeMoves(ServerState.LastMove);
+
+	for (const FGoKartMove& Move : UnacknowledgedMoves)
+	{
+		SimulateMove(Move);
+	}
 }
 
-void AGoKart::SimulateMove(FGoKartMove Move)
+void AGoKart::SimulateMove(const FGoKartMove& Move)
 {
 	FVector Force = GetActorForwardVector() * MaxDrivingForce * Move.Throttle;
 

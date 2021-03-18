@@ -89,7 +89,7 @@ private:
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
-	void SimulateMove(FGoKartMove Move);
+	void SimulateMove(const FGoKartMove& Move);
 
 	FGoKartMove CreateMove(float DeltaTime);
 
