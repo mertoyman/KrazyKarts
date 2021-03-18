@@ -56,12 +56,14 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void ApplyRotation(float DeltaTime);
+	void ApplyRotation(float DeltaTime, float SteeringThrow);
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
+	void SimulateMove(FGoKartMove Move);
+
 	UPROPERTY(EditAnywhere)
 		float Mass = 1000;
 
@@ -84,11 +86,9 @@ private:
 
 	FVector Velocity;
 
-	UPROPERTY(Replicated)
-		float Throttle;
+	float Throttle;
 
-	UPROPERTY(Replicated)
-		float SteeringThrow;
+	float SteeringThrow;
 
 	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
 		FGOKartState ServerState;
