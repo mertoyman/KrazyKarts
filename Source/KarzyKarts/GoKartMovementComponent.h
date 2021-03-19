@@ -12,17 +12,17 @@ struct FGoKartMove
 {
 	GENERATED_USTRUCT_BODY()
 
-		UPROPERTY()
-		float Throttle;
+	UPROPERTY()
+	float Throttle;
 
 	UPROPERTY()
-		float SteeringThrow;
+	float SteeringThrow;
 
 	UPROPERTY()
-		float DeltaTime;
+	float DeltaTime;
 
 	UPROPERTY()
-		float Time;
+	float Time;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -42,20 +42,24 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	FGoKartMove CreateMove(float DeltaTime);
-
-	void SimulateMove(const FGoKartMove& Move);
-	
 	FVector GetVelocity() { return Velocity; }
 	void SetVelocity(FVector Value) { Velocity = Value; }
 
 	float GetThrottle() { return Throttle; }
+
 	void SetThrottle(float Value) { Throttle = Value; }
 
 	float GetSteeringThrow() { return SteeringThrow; }
+
 	void SetSteeringThrow(float Value) { SteeringThrow = Value; }
+	
+	void SimulateMove(const FGoKartMove& Move);
+
+	FGoKartMove GetLastMove() { return LastMove; }
 
 private:
+	FGoKartMove CreateMove(float DeltaTime);
+
 	FVector GetAirResistance();
 
 	FVector GetRollingResistance();
@@ -86,4 +90,6 @@ private:
 	float Throttle;
 
 	float SteeringThrow;
+
+	FGoKartMove LastMove;
 };

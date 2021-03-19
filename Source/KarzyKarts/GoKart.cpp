@@ -9,10 +9,11 @@ AGoKart::AGoKart()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	bReplicates = true;
+	SetReplicates(true);
+	SetReplicateMovement(false);
 
 	MovementComponent = CreateDefaultSubobject<UGoKartMovementComponent>(TEXT("MovementComponent"));
-	ReplicationComponent = CreateDefaultSubobject<UGoKartReplicationComponent>(TEXT("MovementReplicator"));
+	ReplicationComponent = CreateDefaultSubobject<UGoKartReplicationComponent>(TEXT("MovementReplicationComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -29,28 +30,6 @@ void AGoKart::BeginPlay()
 void AGoKart::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (MovementComponent == nullptr) return;
-
-	if (ENetRole::ROLE_AutonomousProxy)
-	{
-		FGoKartMove Move = MovementComponent->CreateMove(DeltaTime);
-		MovementComponent->SimulateMove(Move);
-		ReplicationComponent->UnacknowledgedMoves.Add(Move);
-		ReplicationComponent->Server_SendMove(Move);
-	}
-
-	//We are the server and in control of the pawn
-	if (ENetRole::ROLE_Authority && GetRemoteRole() == ENetRole::ROLE_SimulatedProxy)
-	{
-		FGoKartMove Move = MovementComponent->CreateMove(DeltaTime);
-		ReplicationComponent->Server_SendMove(Move);
-	}
-
-	if (ENetRole::ROLE_SimulatedProxy)
-	{
-		MovementComponent->SimulateMove(ReplicationComponent->ServerState.LastMove);
-	}
 
 	DrawDebugString(GetWorld(), FVector(0, 0, 100), UEnum::GetValueAsString(GetLocalRole()), this, FColor::White, DeltaTime);
 }
