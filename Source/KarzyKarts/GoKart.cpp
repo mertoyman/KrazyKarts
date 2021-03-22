@@ -13,6 +13,7 @@ AGoKart::AGoKart()
 	SetReplicateMovement(false);
 
 	MovementComponent = CreateDefaultSubobject<UGoKartMovementComponent>(TEXT("MovementComponent"));
+	ReplicationComponent = CreateDefaultSubobject<UGoKartReplicationComponent>(TEXT("MovementReplicationComponent"));
 }
 
 // Called when the game starts or when spawned
