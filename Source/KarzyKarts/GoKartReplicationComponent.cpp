@@ -52,6 +52,8 @@ void UGoKartReplicationComponent::TickComponent(float DeltaTime, ELevelTick Tick
 
 void UGoKartReplicationComponent::UpdateServerState(const FGoKartMove& Move)
 {
+	if (MovementComponent == nullptr) return;
+
 	ServerState.LastMove = Move;
 	ServerState.Transform = GetOwner()->GetActorTransform();
 	ServerState.Velocity = MovementComponent->GetVelocity();
@@ -61,15 +63,25 @@ void UGoKartReplicationComponent::ClientTick(float DeltaTime)
 {
 	ClientTimeSinceUpdate += DeltaTime;
 
+	if (MovementComponent == nullptr) return;
+
 	if (ClientTimeBetweenLastUpdates < KINDA_SMALL_NUMBER) return;
 
 	auto TargetLocation = ServerState.Transform.GetLocation();
 	auto LerpRatio = ClientTimeSinceUpdate / ClientTimeBetweenLastUpdates;
 	auto StartLocation = ClientStartTransform.GetLocation();
+	float VelocityToDerivative = ClientTimeBetweenLastUpdates * 100;
+	auto StartDerivative = ClientStartVelocity * VelocityToDerivative;
+	auto TargetDerivative = ServerState.Velocity * VelocityToDerivative;
 
-	auto NewLocation = FMath::LerpStable(StartLocation, TargetLocation, LerpRatio);
+	auto NewLocation = FMath::CubicInterp(StartLocation, StartDerivative, TargetLocation, TargetDerivative, LerpRatio);
 
 	GetOwner()->SetActorLocation(NewLocation);
+
+	auto NewDerivative = FMath::CubicInterpDerivative(StartLocation, StartDerivative, TargetLocation, TargetDerivative, LerpRatio);
+	auto NewVelocity = NewDerivative / VelocityToDerivative;
+
+	MovementComponent->SetVelocity(NewVelocity);
 
 	auto TargetRotation = ServerState.Transform.GetRotation();
 	auto SlerpRatio = ClientTimeSinceUpdate / ClientTimeBetweenLastUpdates;
@@ -118,10 +130,13 @@ void UGoKartReplicationComponent::AutonomousProxy_OnRep_ServerState()
 
 void UGoKartReplicationComponent::SimulatedProxy_OnRep_ServerState()
 {
+	if (MovementComponent == nullptr) return;
+
 	ClientTimeBetweenLastUpdates = ClientTimeSinceUpdate;
 	ClientTimeSinceUpdate = 0;
 
 	ClientStartTransform = GetOwner()->GetActorTransform();
+	ClientStartVelocity = MovementComponent->GetVelocity();
 }
 
 void UGoKartReplicationComponent::ClearAcknowledgeMoves(FGoKartMove LastMove)
