@@ -66,31 +66,59 @@ void UGoKartReplicationComponent::ClientTick(float DeltaTime)
 	if (MovementComponent == nullptr) return;
 
 	if (ClientTimeBetweenLastUpdates < KINDA_SMALL_NUMBER) return;
-
-	auto TargetLocation = ServerState.Transform.GetLocation();
+	
 	auto LerpRatio = ClientTimeSinceUpdate / ClientTimeBetweenLastUpdates;
-	auto StartLocation = ClientStartTransform.GetLocation();
-	float VelocityToDerivative = ClientTimeBetweenLastUpdates * 100;
-	auto StartDerivative = ClientStartVelocity * VelocityToDerivative;
-	auto TargetDerivative = ServerState.Velocity * VelocityToDerivative;
 
-	auto NewLocation = FMath::CubicInterp(StartLocation, StartDerivative, TargetLocation, TargetDerivative, LerpRatio);
+	FHermiteCubicSpline Spline = CreateSpline();
 
+	InterpolateLocation(Spline, LerpRatio);
+	
+	InterpolateVelocity(Spline, LerpRatio);
+	
+	InterpolateRotation(LerpRatio);
+}
+
+FHermiteCubicSpline UGoKartReplicationComponent::CreateSpline()
+{
+	FHermiteCubicSpline Spline;
+	Spline.TargetLocation = ServerState.Transform.GetLocation();
+	Spline.StartLocation = ClientStartTransform.GetLocation();
+	Spline.StartDerivative = ClientStartVelocity * VelocityToDerivative();
+	Spline.TargetDerivative = ServerState.Velocity * VelocityToDerivative();
+	
+	return Spline;
+}
+
+void UGoKartReplicationComponent::InterpolateLocation(const FHermiteCubicSpline& Spline, float LerpRatio)
+{
+	auto NewLocation = Spline.InterpolateLocation(LerpRatio);
 	GetOwner()->SetActorLocation(NewLocation);
+}
 
-	auto NewDerivative = FMath::CubicInterpDerivative(StartLocation, StartDerivative, TargetLocation, TargetDerivative, LerpRatio);
-	auto NewVelocity = NewDerivative / VelocityToDerivative;
+void UGoKartReplicationComponent::InterpolateVelocity(const FHermiteCubicSpline& Spline, float LerpRatio)
+{
+	auto SlerpRatio = ClientTimeSinceUpdate / ClientTimeBetweenLastUpdates;
+	auto NewDerivative = Spline.InterpolateDerivative(LerpRatio);
+	auto NewVelocity = NewDerivative / VelocityToDerivative();
 
 	MovementComponent->SetVelocity(NewVelocity);
+}
 
-	auto TargetRotation = ServerState.Transform.GetRotation();
-	auto SlerpRatio = ClientTimeSinceUpdate / ClientTimeBetweenLastUpdates;
+void UGoKartReplicationComponent::InterpolateRotation(float LerpRatio)
+{
 	auto StartRotation = ClientStartTransform.GetRotation();
-
-	auto NewRotation = FQuat::Slerp(StartRotation, TargetRotation, SlerpRatio);
-
+	auto TargetRotation = ServerState.Transform.GetRotation();
+	auto NewRotation = FQuat::Slerp(StartRotation, TargetRotation, LerpRatio);
 	GetOwner()->SetActorRotation(NewRotation);
 }
+
+
+float UGoKartReplicationComponent::VelocityToDerivative()
+{
+	return ClientTimeBetweenLastUpdates * 100;
+}
+
+
 
 void UGoKartReplicationComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -167,3 +195,4 @@ bool UGoKartReplicationComponent::Server_SendMove_Validate(FGoKartMove Move)
 {
 	return true;
 }
+
