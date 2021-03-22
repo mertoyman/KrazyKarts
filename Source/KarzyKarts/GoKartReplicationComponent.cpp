@@ -3,6 +3,7 @@
 
 #include "GoKartReplicationComponent.h"
 #include "Net\UnrealNetwork.h"
+#include "GameFramework/Actor.h"
 
 // Sets default values for this component's properties
 UGoKartReplicationComponent::UGoKartReplicationComponent()
@@ -57,6 +58,8 @@ void UGoKartReplicationComponent::UpdateServerState(const FGoKartMove& Move)
 	ServerState.LastMove = Move;
 	ServerState.Transform = GetOwner()->GetActorTransform();
 	ServerState.Velocity = MovementComponent->GetVelocity();
+
+	GetOwner()->SetActorTransform(ServerState.Transform);
 }
 
 void UGoKartReplicationComponent::ClientTick(float DeltaTime)
@@ -92,7 +95,10 @@ FHermiteCubicSpline UGoKartReplicationComponent::CreateSpline()
 void UGoKartReplicationComponent::InterpolateLocation(const FHermiteCubicSpline& Spline, float LerpRatio)
 {
 	auto NewLocation = Spline.InterpolateLocation(LerpRatio);
-	GetOwner()->SetActorLocation(NewLocation);
+	if (MeshOffsetRoot != nullptr)
+	{
+		MeshOffsetRoot->SetWorldLocation(NewLocation);
+	}
 }
 
 void UGoKartReplicationComponent::InterpolateVelocity(const FHermiteCubicSpline& Spline, float LerpRatio)
@@ -109,7 +115,11 @@ void UGoKartReplicationComponent::InterpolateRotation(float LerpRatio)
 	auto StartRotation = ClientStartTransform.GetRotation();
 	auto TargetRotation = ServerState.Transform.GetRotation();
 	auto NewRotation = FQuat::Slerp(StartRotation, TargetRotation, LerpRatio);
-	GetOwner()->SetActorRotation(NewRotation);
+
+	if (MeshOffsetRoot != nullptr)
+	{
+		MeshOffsetRoot->SetWorldRotation(NewRotation);
+	}
 }
 
 
@@ -163,8 +173,15 @@ void UGoKartReplicationComponent::SimulatedProxy_OnRep_ServerState()
 	ClientTimeBetweenLastUpdates = ClientTimeSinceUpdate;
 	ClientTimeSinceUpdate = 0;
 
-	ClientStartTransform = GetOwner()->GetActorTransform();
+	if (MeshOffsetRoot != nullptr)
+	{
+		ClientStartTransform.SetLocation(MeshOffsetRoot->GetComponentLocation());
+		ClientStartTransform.SetRotation(MeshOffsetRoot->GetComponentQuat());
+	}
+
 	ClientStartVelocity = MovementComponent->GetVelocity();
+
+	GetOwner()->SetActorTransform(ServerState.Transform);
 }
 
 void UGoKartReplicationComponent::ClearAcknowledgeMoves(FGoKartMove LastMove)
