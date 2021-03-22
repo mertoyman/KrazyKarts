@@ -98,6 +98,8 @@ private:
 
 	FVector ClientStartVelocity;
 
+	float ClientSimulatedTime;
+
 	UPROPERTY()
 	UGoKartMovementComponent* MovementComponent;
 
