@@ -66,7 +66,7 @@ private:
 
 	float ClientTimeBetweenLastUpdates;
 
-	FVector ClientStartLocation;
+	FTransform ClientStartTransform;
 
 	UGoKartMovementComponent* MovementComponent;
 };
